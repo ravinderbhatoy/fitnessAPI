@@ -26,8 +26,16 @@ class WorkoutExerciseSerializer(serializers.ModelSerializer):
 
 class WorkoutSerializer(serializers.ModelSerializer):
     exercises = WorkoutExerciseSerializer(many=True, read_only=True)
-    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Workout
-        fields = ["id", "date", "user", "exercises"]  # and any other workout fields
+        fields = ["id", "date", "exercises"]  # and any other workout fields
+
+
+# Serializers for creating
+class WorkoutCreateSerializer(serializers.ModelSerializer):
+    """Create Workout serializer handles POST requests"""
+
+    class Meta:
+        model = Workout
+        fields = []  # user + date handled internally
