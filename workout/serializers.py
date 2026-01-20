@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from workout.models import Workout, Exercise, WorkoutExercise
 from django.contrib.auth.models import User
+from django.db import transaction
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -26,16 +27,45 @@ class WorkoutExerciseSerializer(serializers.ModelSerializer):
 
 class WorkoutSerializer(serializers.ModelSerializer):
     exercises = WorkoutExerciseSerializer(many=True, read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Workout
-        fields = ["id", "date", "exercises"]  # and any other workout fields
+        fields = ["id", "user", "date", "exercises"]  # and any other workout fields
 
 
-# Serializers for creating
-class WorkoutCreateSerializer(serializers.ModelSerializer):
-    """Create Workout serializer handles POST requests"""
+# ------------------- Serializers for creating -----------------------------
+class WorkoutExerciseCreateSerializer(serializers.Serializer):
+    exercise_id = serializers.IntegerField()
+    sets = serializers.IntegerField()
+    reps = serializers.IntegerField()
+    weight = serializers.FloatField(required=False)
 
-    class Meta:
-        model = Workout
-        fields = []  # user + date handled internally
+
+class WorkoutCreateSerializer(serializers.Serializer):
+    exercises = WorkoutExerciseCreateSerializer(many=True, required=False)
+
+    def create(self, validated_data):
+        # user = self.context["request"].user
+        user = User.objects.first()
+        exercises_data = validated_data.get("exercises", [])
+
+        with transaction.atomic():
+            workout = Workout.objects.create(user=user)
+            workout_exercises = []
+
+            for item in exercises_data:
+                exercise = Exercise.objects.get(id=item["exercise_id"])
+
+                workout_exercises.append(
+                    WorkoutExercise(
+                        workout=workout,
+                        exercise=exercise,
+                        sets=item["sets"],
+                        reps=item["sets"],
+                        weight=item.get("sets"),
+                    )
+                )
+            WorkoutExercise.objects.bulk_create(workout_exercises)
+
+        return workout

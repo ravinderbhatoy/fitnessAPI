@@ -4,7 +4,7 @@ from .serializers import WorkoutSerializer, ExerciseSerializer, WorkoutCreateSer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 
 # Create your views here.
@@ -24,15 +24,15 @@ class WorkoutList(APIView):
 
 
 class WorkoutCreateView(CreateAPIView):
-    """
-    Create Workouts
-    """
+    permission_classes = [AllowAny]
 
-    serializer_class = WorkoutCreateSerializer
-    permission_classes = [IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def post(self, request):
+        serializer = WorkoutCreateSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        workout = serializer.save()
+        return Response(WorkoutSerializer(workout).data, status=201)
 
 
 class ExerciseList(APIView):
