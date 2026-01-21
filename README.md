@@ -10,6 +10,4 @@
 4. Add exercises to workouts [done]
 5. Delete workouts
 6. Update workouts (exercises)
-
 7. Data about each separate exercise for a given user[]
-

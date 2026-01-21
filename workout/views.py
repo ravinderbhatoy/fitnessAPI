@@ -1,8 +1,10 @@
+from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
-from .models import Workout, Exercise
+from .models import Workout, Exercise, WorkoutExercise
 from .serializers import WorkoutSerializer, ExerciseSerializer, WorkoutCreateSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import status
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
@@ -33,6 +35,37 @@ class WorkoutCreateView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         workout = serializer.save()
         return Response(WorkoutSerializer(workout).data, status=201)
+
+
+class AddExercisesToWorkoutView(APIView):
+    """
+    Add new exercises to workout
+    """
+
+    def post(self, request, workout_id):
+        workout = get_object_or_404(Workout, id=workout_id)
+        exercises_data = request.data.get("exercises")
+
+        if not exercises_data:
+            return Response({"error": "exercises list is required"}, status=400)
+
+        objs = []
+        for item in exercises_data:
+            exercise = get_object_or_404(Exercise, id=item["exercise_id"])
+            objs.append(
+                WorkoutExercise(
+                    workout=workout,
+                    exercise=exercise,
+                    sets=item["sets"],
+                    reps=item["reps"],
+                    weight=item.get("weight"),
+                )
+            )
+        WorkoutExercise.objects.bulk_create(objs)
+
+        return Response(
+            {"message": "Exercises added successfully"}, status=status.HTTP_201_CREATED
+        )
 
 
 class ExerciseList(APIView):
