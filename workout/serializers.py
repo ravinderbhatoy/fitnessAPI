@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ExerciseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exercise
-        fields = ["id", "name"]  # Only include what you need
+        fields = ["id", "name"]  # Only include what we need
 
 
 class WorkoutExerciseSerializer(serializers.ModelSerializer):
@@ -40,6 +40,22 @@ class WorkoutExerciseCreateSerializer(serializers.Serializer):
     sets = serializers.IntegerField()
     reps = serializers.IntegerField()
     weight = serializers.FloatField(required=False)
+
+
+class WorkoutExerciseUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkoutExercise
+        fields = ["sets", "reps", "weight"]
+
+    def validate_sets(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Sets must be greater than 0")
+        return value
+
+    def validate(self, data):
+        if not data:
+            raise serializers.ValidationError("At least one field is required")
+        return data
 
 
 class WorkoutCreateSerializer(serializers.Serializer):

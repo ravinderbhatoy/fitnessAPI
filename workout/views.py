@@ -1,11 +1,17 @@
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
+from django.contrib.auth.models import User
 from .models import Workout, Exercise, WorkoutExercise
-from .serializers import WorkoutSerializer, ExerciseSerializer, WorkoutCreateSerializer
+from .serializers import (
+    WorkoutSerializer,
+    ExerciseSerializer,
+    WorkoutCreateSerializer,
+    WorkoutExerciseUpdateSerializer,
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 
@@ -15,10 +21,13 @@ def index(request):
 
 
 class WorkoutList(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        workouts = Workout.objects.filter(user=request.user).prefetch_related(
+        # workouts = Workout.objects.filter(user=request.user).prefetch_related(
+        #     "exercises__exercise"
+        # )
+        workouts = Workout.objects.filter(user=User.objects.first()).prefetch_related(
             "exercises__exercise"
         )
         serializer = WorkoutSerializer(workouts, many=True)
@@ -35,6 +44,13 @@ class WorkoutCreateView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         workout = serializer.save()
         return Response(WorkoutSerializer(workout).data, status=201)
+
+
+class WorkoutDeleteView(APIView):
+    def delete(self, request, workout_id):
+        workout = get_object_or_404(Workout, id=workout_id)
+        workout.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AddExercisesToWorkoutView(APIView):
@@ -66,6 +82,15 @@ class AddExercisesToWorkoutView(APIView):
         return Response(
             {"message": "Exercises added successfully"}, status=status.HTTP_201_CREATED
         )
+
+
+class WorkoutExerciseUpdateView(UpdateAPIView):
+    serializer_class = WorkoutExerciseUpdateSerializer
+    queryset = WorkoutExercise.objects.select_related("workout")
+
+    def get_object(self):
+        obj = super().get_object()
+        return obj
 
 
 class ExerciseList(APIView):
