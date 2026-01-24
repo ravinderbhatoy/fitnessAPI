@@ -27,6 +27,7 @@ class WorkoutExercise(models.Model):
         Workout, on_delete=models.CASCADE, related_name="exercises"
     )
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
+    date = models.DateField(null=True, blank=True)
     sets = models.IntegerField(null=False)
     reps = models.IntegerField(null=False)
     weight = models.FloatField(null=True, blank=True, verbose_name="Weight(Kg)")

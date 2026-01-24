@@ -1,3 +1,4 @@
+from django.db.models import Max
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.models import User
@@ -72,6 +73,7 @@ class AddExercisesToWorkoutView(APIView):
                 WorkoutExercise(
                     workout=workout,
                     exercise=exercise,
+                    date=workout.date,
                     sets=item["sets"],
                     reps=item["reps"],
                     weight=item.get("weight"),
@@ -102,3 +104,30 @@ class ExerciseList(APIView):
         exercises = Exercise.objects.all()
         serializer = ExerciseSerializer(exercises, many=True)
         return Response(serializer.data)
+
+
+class ExerciseProgressView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, exercise_id):
+        data = (
+            WorkoutExercise.objects.filter(
+                exercise_id=exercise_id,
+            )
+            .order_by("date")
+            .values("date", "exercise__name", "sets", "reps", "weight")
+        )
+        return Response(list(data))
+
+
+class ExercisePRView(APIView):
+    def get(self, request, exercise_id):
+        qs = WorkoutExercise.objects.filter(
+            workout__user=User.objects.first(),  # change to login user
+            exercise_id=exercise_id,
+            weight__isnull=False,
+        )
+        pr = qs.aggregate(max_weight=Max("weight"))["max_weight"]
+        exercise = get_object_or_404(Exercise, id=exercise_id)
+
+        return Response({"exercise": exercise.name, "pr": pr})

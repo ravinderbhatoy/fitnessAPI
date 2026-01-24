@@ -21,4 +21,14 @@ urlpatterns = [
         name="updateWorkoutExercise",
     ),
     path("exercises/", views.ExerciseList.as_view(), name="exercises"),
+    path(
+        "exercises/<int:exercise_id>/progress/",
+        views.ExerciseProgressView.as_view(),
+        name="exerciseProgress",
+    ),
+    path(
+        "exercises/<int:exercise_id>/pr/",
+        views.ExercisePRView.as_view(),
+        name="exercisePR",
+    ),
 ]

@@ -77,6 +77,7 @@ class WorkoutCreateSerializer(serializers.Serializer):
                     WorkoutExercise(
                         workout=workout,
                         exercise=exercise,
+                        date=workout.date,
                         sets=item["sets"],
                         reps=item["sets"],
                         weight=item.get("sets"),
