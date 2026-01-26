@@ -17,8 +17,8 @@ urlpatterns = [
     ),
     path(
         "workout-exercises/<int:pk>/",
-        views.WorkoutExerciseUpdateView.as_view(),
-        name="updateWorkoutExercise",
+        views.WorkoutExerciseDetailView.as_view(),
+        name="workoutExerciseView",
     ),
     path("exercises/", views.ExerciseList.as_view(), name="exercises"),
     path(

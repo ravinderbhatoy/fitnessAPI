@@ -14,6 +14,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.generics import CreateAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.exceptions import NotFound, PermissionDenied
 
 
 # Create your views here.
@@ -86,13 +87,36 @@ class AddExercisesToWorkoutView(APIView):
         )
 
 
-class WorkoutExerciseUpdateView(UpdateAPIView):
-    serializer_class = WorkoutExerciseUpdateSerializer
-    queryset = WorkoutExercise.objects.select_related("workout")
+class WorkoutExerciseDetailView(APIView):
 
-    def get_object(self):
-        obj = super().get_object()
+    def get_object(self, pk, user):
+        try:
+            obj = WorkoutExercise.objects.select_related("workout").get(pk=pk)
+        except WorkoutExercise.DoesNotExist:
+            raise NotFound("Workout exercise not found")
+
+        if user != obj.workout.user:
+            raise PermissionDenied("You do not own this workout")
+
         return obj
+
+    def patch(self, request, pk):
+        request.user = User.objects.first()  # for testing
+        workout_exercise = self.get_object(pk, request.user)
+        serializer = WorkoutExerciseUpdateSerializer(
+            workout_exercise, data=request.data, partial=True
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        # fetch object
+        request.user = User.objects.first()  # for testing
+        workout_exercise = self.get_object(pk, request.user)
+        workout_exercise.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ExerciseList(APIView):

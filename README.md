@@ -4,12 +4,12 @@
 
 ## TODO's
 
-1. Fetch workouts [done]
-2. Add workouts [done]
-3. User can only fetch their workouts [done]
-4. Add exercises to workouts [done]
-5. Delete workouts [done]
-6. Update workouts (exercises) [done]
-7. Data about each separate exercise for a given user [done]
-8. Calculate PR's for a given exercise [done]
-9. Delete exercise from workout []
+1. Fetch workouts [x]
+2. Add workouts [x]
+3. User can only fetch their workouts [x]
+4. Add exercises to workouts [x]
+5. Delete workouts [x]
+6. Update workouts (exercises) [x]
+7. Data about each separate exercise for a given user [x]
+8. Calculate PR's for a given exercise [x]
+9. Delete exercise from workout [x]
