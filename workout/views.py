@@ -12,12 +12,13 @@ from .serializers import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, UpdateAPIView
+from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import NotFound, PermissionDenied
 
-
 # Create your views here.
+
+
 def index(request):
     return HttpResponse("Hey this is index page")
 
@@ -33,6 +34,19 @@ class WorkoutList(APIView):
             "exercises__exercise"
         )
         serializer = WorkoutSerializer(workouts, many=True)
+        return Response(serializer.data)
+
+
+class WorkoutDetailView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            workout = Workout.objects.prefetch_related(
+                "exercises__exercise").get(pk=pk, user=User.objects.first())  # change to request.user
+        except Workout.DoesNotExist:
+            raise NotFound("Workout not found")
+        serializer = WorkoutSerializer(workout)
         return Response(serializer.data)
 
 
@@ -153,5 +167,4 @@ class ExercisePRView(APIView):
         )
         pr = qs.aggregate(max_weight=Max("weight"))["max_weight"]
         exercise = get_object_or_404(Exercise, id=exercise_id)
-
         return Response({"exercise": exercise.name, "pr": pr})
