@@ -1,7 +1,6 @@
 from django.db.models import Max
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
-from django.contrib.auth.models import User
 from .models import Workout, Exercise, WorkoutExercise
 from .serializers import (
     WorkoutSerializer,
@@ -13,24 +12,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import NotFound, PermissionDenied
 
+
 # Create your views here.
-
-
 def index(request):
     return HttpResponse("Hey this is index page")
 
 
 class WorkoutList(APIView):
-    # permission_classes = [IsAuthenticated]
-
     def get(self, request):
-        # workouts = Workout.objects.filter(user=request.user).prefetch_related(
-        #     "exercises__exercise"
-        # )
-        workouts = Workout.objects.filter(user=User.objects.first()).prefetch_related(
+        workouts = Workout.objects.filter(user=request.user).prefetch_related(
             "exercises__exercise"
         )
         serializer = WorkoutSerializer(workouts, many=True)
@@ -43,7 +35,7 @@ class WorkoutDetailView(APIView):
     def get(self, request, pk):
         try:
             workout = Workout.objects.prefetch_related(
-                "exercises__exercise").get(pk=pk, user=User.objects.first())  # change to request.user
+                "exercises__exercise").get(pk=pk, user=request.user)  # change to request.user
         except Workout.DoesNotExist:
             raise NotFound("Workout not found")
         serializer = WorkoutSerializer(workout)
@@ -51,8 +43,6 @@ class WorkoutDetailView(APIView):
 
 
 class WorkoutCreateView(CreateAPIView):
-    permission_classes = [AllowAny]
-
     def post(self, request):
         serializer = WorkoutCreateSerializer(
             data=request.data, context={"request": request}
@@ -115,7 +105,6 @@ class WorkoutExerciseDetailView(APIView):
         return obj
 
     def patch(self, request, pk):
-        request.user = User.objects.first()  # for testing
         workout_exercise = self.get_object(pk, request.user)
         serializer = WorkoutExerciseUpdateSerializer(
             workout_exercise, data=request.data, partial=True
@@ -127,7 +116,6 @@ class WorkoutExerciseDetailView(APIView):
 
     def delete(self, request, pk):
         # fetch object
-        request.user = User.objects.first()  # for testing
         workout_exercise = self.get_object(pk, request.user)
         workout_exercise.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -145,8 +133,6 @@ class ExerciseList(APIView):
 
 
 class ExerciseProgressView(APIView):
-    # permission_classes = [IsAuthenticated]
-
     def get(self, request, exercise_id):
         data = (
             WorkoutExercise.objects.filter(
@@ -161,7 +147,7 @@ class ExerciseProgressView(APIView):
 class ExercisePRView(APIView):
     def get(self, request, exercise_id):
         qs = WorkoutExercise.objects.filter(
-            workout__user=User.objects.first(),  # change to login user
+            workout__user=request.user,  # change to login user
             exercise_id=exercise_id,
             weight__isnull=False,
         )

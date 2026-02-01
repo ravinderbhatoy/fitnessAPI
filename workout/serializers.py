@@ -62,8 +62,7 @@ class WorkoutCreateSerializer(serializers.Serializer):
     exercises = WorkoutExerciseCreateSerializer(many=True, required=False)
 
     def create(self, validated_data):
-        # user = self.context["request"].user
-        user = User.objects.first()
+        user = self.context["request"].user
         exercises_data = validated_data.get("exercises", [])
 
         with transaction.atomic():
